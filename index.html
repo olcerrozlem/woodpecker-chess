@@ -1,55 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Woodpecker Method Trainer</title>
-    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    <style>
-        body { background: #1a1a1a; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .stats-bar { background: #333; padding: 10px 20px; border-radius: 5px; margin-bottom: 15px; width: 410px; display: flex; justify-content: space-between; font-weight: bold; }
-        #board { width: 450px; border: 5px solid #444; border-radius: 4px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
-        .status-panel { background: #2d2d2d; padding: 15px; margin-top: 20px; width: 420px; border-radius: 5px; text-align: center; min-height: 40px; border-bottom: 4px solid #444; }
-        .controls { margin-top: 20px; display: flex; gap: 10px; }
-        .btn { padding: 12px 25px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; color: white; min-width: 120px; }
-        .btn-prev { background: #7f8c8d; }
-        .btn-prev:hover { background: #95a5a6; }
-        .btn-next { background: #27ae60; }
-        .btn-next:hover { background: #2ecc71; }
-        .correct { color: #2ecc71; }
-        .wrong { color: #e74c3c; }
-    </style>
-</head>
-<body>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
-    <h2>Woodpecker Method Trainer</h2>
-    
-    <div class="stats-bar">
-        <span>Exercise: <span id="current-num">1</span> / 1128</span>
-        <span>Score: <span id="score">0</span></span>
-    </div>
+<script>
+    var board = null;
+    var game = new Chess();
+    var currentIdx = 0;
+    var moveIdx = 0; // FIX: Added the missing move counter
+    var points = 0;
 
-    <div id="board"></div>
-
-    <div class="status-panel" id="status">Calculate the winning line...</div>
-
-    <div class="controls">
-        <button class="btn btn-prev" onclick="prevPuzzle()">Previous</button>
-        <button class="btn btn-next" onclick="nextPuzzle()">Next</button>
-    </div>
-
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    
-    <script>
-        var board = null;
-        var game = new Chess();
-        var currentIdx = 0;
-        var points = 0;
-
-        // PUZZLE DATA (Add more FENs here from the book)
-        const puzzles = [
-            { fen: '4r3/p4pkp/1p4p1/8/P1b5/2r1P3/3R1PPP/1R4K1 b - - 0 1', moves: ['Rxe3', 'fxe3', 'Rxh2+', 'Kxh2', 'Rh8#'], info: "Hamppe – Steinitz, 1860" },
+    const puzzles = [
+         { fen: '4r3/p4pkp/1p4p1/8/P1b5/2r1P3/3R1PPP/1R4K1 b - - 0 1', moves: ['Rxe3', 'fxe3', 'Rxh2+', 'Kxh2', 'Rh8#'], info: "Hamppe – Steinitz, 1860" },
             { fen: 'r1bq1rk1/pppp1ppp/2n5/4P3/2B5/2P2N2/P4PPP/R1BQR1K1 w - - 0 1', moves: ['d6', 'cxd6', 'Rf8+'], info: "Steinitz – Wilson, 1862" },
             { fen: '2r3k1/1pRb1ppp/q3pn2/1p1p4/1Q1P4/P3PN2/1P3PPP/4K2R w K - 0 1', moves: ['Rxc8+', 'Bxc8', 'Bxf4'], info: "Steinitz – Dubois, 1862" },
             { fen: '4r1k1/pp3ppp/2p5/4q3/4r3/P1P1R2P/1P1Q1PP1/4R1K1 b - - 0 1', moves: ['Rd2+', 'Rxd2', 'Rxh2+'], info: "Green – Steinitz, 1864" },
@@ -863,14 +824,15 @@
             { fen: 'r1bq1rk1/pppp1ppp/2n5/4n3/2B5/2P2N2/P4PPP/R1BQR1K1 w - - 0 1', moves: ['Nxe5', 'Nxe5', 'Rxe5', 'd6', 'Re1', 'Qh4', 'Bb3', 'Bg4', 'f3', 'Bf5', 'Be3', 'Rae8', 'Qd2', 'h6', 'Bf2', 'Qf6', 'Bd4', 'Qg6', 'Rxe8', 'Rxe8', 'Re1', 'Rxe1+', 'Qxe1', 'Be6', 'Bxe6', 'fxe6', 'Qe2', 'a6', 'h3', 'Kh7', 'Kf2'], info: "Giri – Aronian, 2026 (Elite)" },
             { fen: 'r1bq1rk1/pppp1ppp/2n5/4n3/2B5/2P2N2/P4PPP/R1BQR1K1 w - - 0 1', moves: ['Nxe5', 'Nxe5', 'Rxe5', 'd6', 'Re1', 'Qh4', 'Bb3', 'Bg4', 'f3', 'Bf5', 'Be3', 'Rae8', 'Qd2', 'h6', 'Bf2', 'Qf6', 'Bd4', 'Qg6', 'Rxe8', 'Rxe8', 'Re1', 'Rxe1+', 'Qxe1', 'Be6', 'Bxe6', 'fxe6', 'Qe2', 'a6', 'h3', 'Kh7', 'Kf2', 'Qf5'], info: "Abdusattorov – Vidit, 2026 (Elite)" },
             { fen: '4r1k1/pp3ppp/2p1qn2/8/1P1P4/P4N1P/1Q3PP1/4R1K1 b - - 0 1', moves: ['Qxe1+', 'Nxe1', 'Rxe1+', 'Kh2', 'h5', 'g3', 'g6', 'Kg2', 'Nd5', 'b5', 'cxb5', 'Qxb5', 'Nb6', 'a4', 'Ra1', 'a5', 'Nc8', 'Qe8+', 'Kg7', 'Qxc8'], info: "Final Exercise: Completion of The Woodpecker Method (1128)" }
-        ];
+        
+    ];
 
-        function onDrop(source, target) {
-        let move = game.move({ from: source, to: target, promotion: 'q' });
+    function onDrop(source, target) {
+        var move = game.move({ from: source, to: target, promotion: 'q' });
         if (move === null) return 'snapback';
 
-        // Get the current expected move from the array
-        let expected = puzzles[currentIdx].moves[moveIdx];
+        // FIX: Changed 'solution' to 'moves[moveIdx]' to match your data
+        var expected = puzzles[currentIdx].moves[moveIdx];
         
         if (move.san === expected || move.lan === expected.toLowerCase()) {
             moveIdx++;
@@ -884,72 +846,47 @@
                 setTimeout(makeOpponentMove, 600);
             }
         } else {
-            document.getElementById('status').innerHTML = '<span class="wrong">❌ Incorrect. Start over!</span>';
+            document.getElementById('status').innerHTML = '<span class="wrong">❌ Incorrect. Try again!</span>';
             document.querySelector('.status-panel').style.borderBottomColor = "#e74c3c";
             setTimeout(resetPuzzle, 1000);
         }
     }
-        let moveIdx = 0; // Tracks which move in the sequence we are on
 
-        function makeOpponentMove() {
-            game.move(puzzles[currentIdx].moves[moveIdx]);
-            board.position(game.fen());
-            moveIdx++;
-        }
-    
-        function resetPuzzle() {
-            moveIdx = 0;
-            game.load(puzzles[currentIdx].fen);
-            board.position(puzzles[currentIdx].fen);
-            document.getElementById('status').innerText = (game.turn() === 'w' ? "White" : "Black") + " to move.";
-            document.querySelector('.status-panel').style.borderBottomColor = "#444";
-        }
-
-        if (move === null) return 'snapback';
-
-        // Fix: Checks both SAN (Standard) and LAN (Long) notation
-        if (move.san === puzzles[currentIdx].solution || move.lan === puzzles[currentIdx].solution) {
-            points++;
-            document.getElementById('score').innerText = points;
-            document.getElementById('status').innerHTML = '<span class="correct">✅ CORRECT! ' + puzzles[currentIdx].info + '</span>';
-            document.querySelector('.status-panel').style.borderBottomColor = "#2ecc71";
-        } else {
-            document.getElementById('status').innerHTML = '<span class="wrong">❌ Incorrect. Solution: ' + puzzles[currentIdx].solution + '</span>';
-            document.querySelector('.status-panel').style.borderBottomColor = "#e74c3c";
-            setTimeout(function() {
-                game.undo();
-                board.position(game.fen());
-            }, 500);
-        }
+    function makeOpponentMove() {
+        game.move(puzzles[currentIdx].moves[moveIdx]);
+        board.position(game.fen());
+        moveIdx++;
     }
 
-        function updateDisplay() {
-            moveIdx = 0; // Reset move counter
-            game.load(puzzles[currentIdx].fen);
-            board.position(puzzles[currentIdx].fen);
-            board.orientation(game.turn() === 'w' ? 'white' : 'black');
-            document.getElementById('current-num').innerText = currentIdx + 1;
-            document.getElementById('status').innerText = (game.turn() === 'w' ? "White" : "Black") + " to move.";
-            document.querySelector('.status-panel').style.borderBottomColor = "#444";
-        }
-    
-        function nextPuzzle() { if (currentIdx < puzzles.length - 1) { currentIdx++; updateDisplay(); } }
-        function prevPuzzle() { if (currentIdx > 0) { currentIdx--; updateDisplay(); } }
-    
-        // Initialize with fallback piece theme
-        board = Chessboard('board', {
-            draggable: true,
-            dropOffBoard: 'snapback',
-            onDrop: onDrop,
-            position: puzzles[currentIdx].fen,
-            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-        });
-    
-        $(window).resize(board.resize);
-        updateDisplay();
-    </script>
-</body>
+    function resetPuzzle() {
+        moveIdx = 0;
+        game.load(puzzles[currentIdx].fen);
+        board.position(puzzles[currentIdx].fen);
+        document.getElementById('status').innerText = (game.turn() === 'w' ? "White" : "Black") + " to move.";
+        document.querySelector('.status-panel').style.borderBottomColor = "#444";
+    }
 
-</html>
+    function updateDisplay() {
+        moveIdx = 0;
+        game.load(puzzles[currentIdx].fen);
+        board.position(puzzles[currentIdx].fen);
+        board.orientation(game.turn() === 'w' ? 'white' : 'black');
+        document.getElementById('current-num').innerText = currentIdx + 1;
+        document.getElementById('status').innerText = (game.turn() === 'w' ? "White" : "Black") + " to move.";
+        document.querySelector('.status-panel').style.borderBottomColor = "#444";
+    }
 
+    function nextPuzzle() { if (currentIdx < puzzles.length - 1) { currentIdx++; updateDisplay(); } }
+    function prevPuzzle() { if (currentIdx > 0) { currentIdx--; updateDisplay(); } }
 
+    board = Chessboard('board', {
+        draggable: true,
+        dropOffBoard: 'snapback',
+        onDrop: onDrop,
+        position: puzzles[currentIdx].fen,
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+    });
+
+    $(window).resize(board.resize);
+    updateDisplay();
+</script>
