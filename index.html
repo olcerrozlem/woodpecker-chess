@@ -866,11 +866,44 @@
         ];
 
         function onDrop(source, target) {
-        var move = game.move({
-            from: source,
-            to: target,
-            promotion: 'q'
-        });
+        let move = game.move({ from: source, to: target, promotion: 'q' });
+        if (move === null) return 'snapback';
+
+        // Get the current expected move from the array
+        let expected = puzzles[currentIdx].moves[moveIdx];
+        
+        if (move.san === expected || move.lan === expected.toLowerCase()) {
+            moveIdx++;
+            if (moveIdx === puzzles[currentIdx].moves.length) {
+                points++;
+                document.getElementById('score').innerText = points;
+                document.getElementById('status').innerHTML = '<span class="correct">✅ COMPLETE! ' + puzzles[currentIdx].info + '</span>';
+                document.querySelector('.status-panel').style.borderBottomColor = "#2ecc71";
+            } else {
+                document.getElementById('status').innerHTML = '<span>⭐ Good! Find the follow-up...</span>';
+                setTimeout(makeOpponentMove, 600);
+            }
+        } else {
+            document.getElementById('status').innerHTML = '<span class="wrong">❌ Incorrect. Start over!</span>';
+            document.querySelector('.status-panel').style.borderBottomColor = "#e74c3c";
+            setTimeout(resetPuzzle, 1000);
+        }
+    }
+        let moveIdx = 0; // Tracks which move in the sequence we are on
+
+        function makeOpponentMove() {
+            game.move(puzzles[currentIdx].moves[moveIdx]);
+            board.position(game.fen());
+            moveIdx++;
+        }
+    
+        function resetPuzzle() {
+            moveIdx = 0;
+            game.load(puzzles[currentIdx].fen);
+            board.position(puzzles[currentIdx].fen);
+            document.getElementById('status').innerText = (game.turn() === 'w' ? "White" : "Black") + " to move.";
+            document.querySelector('.status-panel').style.borderBottomColor = "#444";
+        }
 
         if (move === null) return 'snapback';
 
@@ -891,6 +924,7 @@
     }
 
         function updateDisplay() {
+            moveIdx = 0; // Reset move counter
             game.load(puzzles[currentIdx].fen);
             board.position(puzzles[currentIdx].fen);
             board.orientation(game.turn() === 'w' ? 'white' : 'black');
@@ -917,4 +951,5 @@
 </body>
 
 </html>
+
 
