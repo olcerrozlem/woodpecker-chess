@@ -54,13 +54,22 @@
         ];
 
         function onDrop(source, target) {
-            var move = game.move({ from: source, to: target, promotion: 'q' });
+            let move = game.move({ from: source, to: target, promotion: 'q' });
             if (move === null) return 'snapback';
-
-            var cleanMove = move.san.replace(/[x+#]/g, '');
-            var cleanExpected = expected.replace(/[x+#]/g, '');
+        
+            let expected = puzzles[currentIdx].moves[moveIdx];
             
-            if (cleanMove === cleanExpected || move.lan === expected.toLowerCase()) {
+            // This logic compares the square (e3) instead of the text (Rxe3)
+            // It's the most reliable way to make the trainer work
+            let movePlayed = move.from + move.to;
+            
+            // We create a "virtual" move for the expected move to get its squares
+            let tempGame = new Chess(game.fen());
+            tempGame.undo(); // go back to the state before your move
+            let expectedMove = tempGame.move(expected);
+            let expectedTarget = expectedMove ? expectedMove.from + expectedMove.to : "";
+        
+            if (movePlayed === expectedTarget || move.san === expected) {
                 moveIdx++;
                 if (moveIdx === puzzles[currentIdx].moves.length) {
                     points++;
@@ -118,4 +127,5 @@
     </script>
 </body>
 </html>
+
 
