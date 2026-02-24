@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Woodpecker Method Trainer</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <style>
         body { background: #1a1a1a; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .stats-bar { background: #333; padding: 10px 20px; border-radius: 5px; margin-bottom: 15px; width: 410px; display: flex; justify-content: space-between; font-weight: bold; }
@@ -38,14 +38,14 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-
+    
     <script>
-        let board = null;
-        let game = new Chess();
-        let currentIdx = 0;
-        let points = 0;
+        var board = null;
+        var game = new Chess();
+        var currentIdx = 0;
+        var points = 0;
 
         // PUZZLE DATA (Add more FENs here from the book)
         const puzzles = [
@@ -866,20 +866,29 @@
         ];
 
         function onDrop(source, target) {
-            let move = game.move({ from: source, to: target, promotion: 'q' });
-            if (move === null) return 'snapback';
+        var move = game.move({
+            from: source,
+            to: target,
+            promotion: 'q'
+        });
 
-            if (move.lan === puzzles[currentIdx].solution) {
-                points++;
-                document.getElementById('score').innerText = points;
-                document.getElementById('status').innerHTML = '<span class="correct">✅ CORRECT! ' + puzzles[currentIdx].info + '</span>';
-                document.querySelector('.status-panel').style.borderBottomColor = "#2ecc71";
-            } else {
-                document.getElementById('status').innerHTML = '<span class="wrong">❌ Incorrect. Pattern: ' + puzzles[currentIdx].solution + '</span>';
-                document.querySelector('.status-panel').style.borderBottomColor = "#e74c3c";
-                setTimeout(() => { game.undo(); board.position(game.fen()); }, 600);
-            }
+        if (move === null) return 'snapback';
+
+        // Fix: Checks both SAN (Standard) and LAN (Long) notation
+        if (move.san === puzzles[currentIdx].solution || move.lan === puzzles[currentIdx].solution) {
+            points++;
+            document.getElementById('score').innerText = points;
+            document.getElementById('status').innerHTML = '<span class="correct">✅ CORRECT! ' + puzzles[currentIdx].info + '</span>';
+            document.querySelector('.status-panel').style.borderBottomColor = "#2ecc71";
+        } else {
+            document.getElementById('status').innerHTML = '<span class="wrong">❌ Incorrect. Solution: ' + puzzles[currentIdx].solution + '</span>';
+            document.querySelector('.status-panel').style.borderBottomColor = "#e74c3c";
+            setTimeout(function() {
+                game.undo();
+                board.position(game.fen());
+            }, 500);
         }
+    }
 
         function updateDisplay() {
             game.load(puzzles[currentIdx].fen);
@@ -887,33 +896,25 @@
             board.orientation(game.turn() === 'w' ? 'white' : 'black');
             document.getElementById('current-num').innerText = currentIdx + 1;
             document.getElementById('status').innerText = (game.turn() === 'w' ? "White" : "Black") + " to move.";
-            document.getElementById('status').style.color = "white";
             document.querySelector('.status-panel').style.borderBottomColor = "#444";
         }
-
-        function nextPuzzle() {
-            if (currentIdx < puzzles.length - 1) {
-                currentIdx++;
-                updateDisplay();
-            }
-        }
-
-        function prevPuzzle() {
-            if (currentIdx > 0) {
-                currentIdx--;
-                updateDisplay();
-            }
-        }
-
+    
+        function nextPuzzle() { if (currentIdx < puzzles.length - 1) { currentIdx++; updateDisplay(); } }
+        function prevPuzzle() { if (currentIdx > 0) { currentIdx--; updateDisplay(); } }
+    
+        // Initialize with fallback piece theme
         board = Chessboard('board', {
             draggable: true,
             dropOffBoard: 'snapback',
             onDrop: onDrop,
+            position: puzzles[currentIdx].fen,
             pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
         });
-
+    
+        $(window).resize(board.resize);
         updateDisplay();
     </script>
 </body>
 
 </html>
+
