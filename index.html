@@ -57,8 +57,10 @@
             var move = game.move({ from: source, to: target, promotion: 'q' });
             if (move === null) return 'snapback';
 
-            var expected = puzzles[currentIdx].moves[moveIdx];
-            if (move.san === expected || move.lan === expected.toLowerCase()) {
+            var cleanMove = move.san.replace(/[x+#]/g, '');
+            var cleanExpected = expected.replace(/[x+#]/g, '');
+            
+            if (cleanMove === cleanExpected || move.lan === expected.toLowerCase()) {
                 moveIdx++;
                 if (moveIdx === puzzles[currentIdx].moves.length) {
                     points++;
@@ -116,3 +118,4 @@
     </script>
 </body>
 </html>
+
